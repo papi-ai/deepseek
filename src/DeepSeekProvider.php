@@ -30,7 +30,7 @@ use RuntimeException;
  * - deepseek-chat (general purpose)
  * - deepseek-reasoner (reasoning)
  */
-final class DeepSeekProvider implements ProviderInterface
+class DeepSeekProvider implements ProviderInterface
 {
     private const API_URL = 'https://api.deepseek.com/chat/completions';
 
@@ -41,7 +41,8 @@ final class DeepSeekProvider implements ProviderInterface
         private readonly string $apiKey,
         private readonly string $defaultModel = self::MODEL_DEEPSEEK_CHAT,
         private readonly int $defaultMaxTokens = 4096,
-    ) {}
+    ) {
+    }
 
     public function chat(array $messages, array $options = []): Response
     {
@@ -240,7 +241,7 @@ final class DeepSeekProvider implements ProviderInterface
     /**
      * Make an API request.
      */
-    private function request(array $payload): array
+    protected function request(array $payload): array
     {
         $ch = curl_init(self::API_URL);
 
@@ -279,7 +280,7 @@ final class DeepSeekProvider implements ProviderInterface
      *
      * @return Generator<array>
      */
-    private function streamRequest(array $payload): Generator
+    protected function streamRequest(array $payload): Generator
     {
         $ch = curl_init(self::API_URL);
 
@@ -293,6 +294,7 @@ final class DeepSeekProvider implements ProviderInterface
             ],
             CURLOPT_WRITEFUNCTION => function ($ch, $data) use (&$buffer) {
                 $buffer .= $data;
+
                 return strlen($data);
             },
         ]);
