@@ -101,14 +101,6 @@ class DeepSeekProvider implements ProviderInterface
      * has isComplete set to true.
      *
      * @param array<Message> $messages Conversation history as PapiAI Message objects
-     * @param array{
-     *     model?: string,
-     *     tools?: array,
-     *     maxTokens?: int,
-     *     temperature?: float,
-     *     stopSequences?: array<string>,
-     *     outputSchema?: array,
-     * } $options Request options (model, tools, maxTokens, temperature, etc.)
      *
      * @return iterable<StreamChunk> Stream of partial response chunks
      *
