@@ -1,6 +1,6 @@
 # PapiAI DeepSeek Provider
 
-[![Tests](https://github.com/papi-ai/deepseek/workflows/CI/badge.svg)](https://github.com/papi-ai/deepseek/actions?query=workflow%3ACI)
+[![CI](https://github.com/papi-ai/deepseek/workflows/CI/badge.svg)](https://github.com/papi-ai/deepseek/actions?query=workflow%3ACI) [![Latest Version](https://img.shields.io/packagist/v/papi-ai/deepseek.svg)](https://packagist.org/packages/papi-ai/deepseek) [![Total Downloads](https://img.shields.io/packagist/dt/papi-ai/deepseek.svg)](https://packagist.org/packages/papi-ai/deepseek) [![PHP Version](https://img.shields.io/packagist/php-v/papi-ai/deepseek.svg)](https://packagist.org/packages/papi-ai/deepseek) [![License](https://img.shields.io/packagist/l/papi-ai/deepseek.svg)](https://packagist.org/packages/papi-ai/deepseek)
 
 DeepSeek provider for [PapiAI](https://github.com/papi-ai/papi-core) - A simple but powerful PHP library for building AI agents.
 
