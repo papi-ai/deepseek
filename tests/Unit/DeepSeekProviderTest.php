@@ -138,7 +138,7 @@ describe('DeepSeekProvider', function () {
 
             $this->provider->chat([Message::user('Hello')]);
 
-            expect($this->provider->lastPayload['model'])->toBe('deepseek-chat');
+            expect($this->provider->lastPayload['model'])->toBe('deepseek-v4-flash');
         });
 
         it('overrides model and options from parameters', function () {

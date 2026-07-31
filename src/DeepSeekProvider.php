@@ -15,6 +15,7 @@ declare(strict_types=1);
 namespace PapiAI\DeepSeek;
 
 use Generator;
+use PapiAI\Core\Contracts\NamedToolSelectableInterface;
 use PapiAI\Core\Contracts\ProviderInterface;
 use PapiAI\Core\Exception\AuthenticationException;
 use PapiAI\Core\Exception\ProviderException;
@@ -43,13 +44,21 @@ use RuntimeException;
  *
  * @see https://api-docs.deepseek.com/
  *
- * @psalm-import-type ChatOptions from ProviderInterface
+ * @psalm-import-type ChatOptions from ProviderInterface *
+ * The neutral `effort` option is accepted and ignored here. DeepSeek does expose reasoning control, as a nested thinking object rather than a flat level, but papi does not map it yet, so the option is accepted and ignored for now. Ignoring it
+ * degrades nothing the caller was promised, which is why it is silent where an unhonourable
+ * `toolChoice` throws.
  */
-class DeepSeekProvider implements ProviderInterface
+class DeepSeekProvider implements ProviderInterface, NamedToolSelectableInterface
 {
     private const API_URL = 'https://api.deepseek.com/chat/completions';
 
+    public const MODEL_DEEPSEEK_V4_FLASH = 'deepseek-v4-flash';
+    public const MODEL_DEEPSEEK_V4_PRO = 'deepseek-v4-pro';
+
+    /** @deprecated Discontinued 24 July 2026; requests fail. Use MODEL_DEEPSEEK_V4_FLASH. */
     public const MODEL_DEEPSEEK_CHAT = 'deepseek-chat';
+    /** @deprecated Discontinued 24 July 2026; requests fail. Use MODEL_DEEPSEEK_V4_FLASH. */
     public const MODEL_DEEPSEEK_REASONER = 'deepseek-reasoner';
 
     /**
@@ -61,7 +70,7 @@ class DeepSeekProvider implements ProviderInterface
      */
     public function __construct(
         private readonly string $apiKey,
-        private readonly string $defaultModel = self::MODEL_DEEPSEEK_CHAT,
+        private readonly string $defaultModel = self::MODEL_DEEPSEEK_V4_FLASH,
         private readonly int $defaultMaxTokens = 4096,
     ) {
     }
