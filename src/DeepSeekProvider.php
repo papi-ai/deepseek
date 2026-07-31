@@ -15,6 +15,7 @@ declare(strict_types=1);
 namespace PapiAI\DeepSeek;
 
 use Generator;
+use PapiAI\Core\Contracts\NamedToolSelectableInterface;
 use PapiAI\Core\Contracts\ProviderInterface;
 use PapiAI\Core\Exception\AuthenticationException;
 use PapiAI\Core\Exception\ProviderException;
@@ -48,7 +49,7 @@ use RuntimeException;
  * degrades nothing the caller was promised, which is why it is silent where an unhonourable
  * `toolChoice` throws.
  */
-class DeepSeekProvider implements ProviderInterface
+class DeepSeekProvider implements ProviderInterface, NamedToolSelectableInterface
 {
     private const API_URL = 'https://api.deepseek.com/chat/completions';
 
