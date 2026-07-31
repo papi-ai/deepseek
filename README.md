@@ -32,9 +32,12 @@ echo $response->text;
 ## Available Models
 
 ```php
-DeepSeekProvider::MODEL_DEEPSEEK_CHAT      // 'deepseek-chat' (default)
-DeepSeekProvider::MODEL_DEEPSEEK_REASONER  // 'deepseek-reasoner' (reasoning)
+DeepSeekProvider::MODEL_DEEPSEEK_V4_FLASH  // 'deepseek-v4-flash' (default)
+DeepSeekProvider::MODEL_DEEPSEEK_V4_PRO    // 'deepseek-v4-pro'
 ```
+
+The `MODEL_DEEPSEEK_CHAT` and `MODEL_DEEPSEEK_REASONER` constants are still shipped but deprecated: both were discontinued on 24 July 2026 and requests using them fail. The V4 family replaces the old chat and reasoner split, with the neutral `effort` option controlling how hard the model thinks.
+
 
 ## Features
 
