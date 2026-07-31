@@ -17,9 +17,11 @@ namespace PapiAI\DeepSeek;
 use Generator;
 use PapiAI\Core\Contracts\NamedToolSelectableInterface;
 use PapiAI\Core\Contracts\ProviderInterface;
+use PapiAI\Core\Effort;
 use PapiAI\Core\Exception\AuthenticationException;
 use PapiAI\Core\Exception\ProviderException;
 use PapiAI\Core\Exception\RateLimitException;
+use PapiAI\Core\Exception\UnknownEffortException;
 use PapiAI\Core\Message;
 use PapiAI\Core\Response;
 use PapiAI\Core\Role;
@@ -45,9 +47,8 @@ use RuntimeException;
  * @see https://api-docs.deepseek.com/
  *
  * @psalm-import-type ChatOptions from ProviderInterface *
- * The neutral `effort` option is accepted and ignored here. DeepSeek does expose reasoning control, as a nested thinking object rather than a flat level, but papi does not map it yet, so the option is accepted and ignored for now. Ignoring it
- * degrades nothing the caller was promised, which is why it is silent where an unhonourable
- * `toolChoice` throws.
+ * The neutral effort option maps to DeepSeek's nested thinking object. Thinking is on by
+ * default here, so "none" disables it explicitly rather than omitting the field.
  */
 class DeepSeekProvider implements ProviderInterface, NamedToolSelectableInterface
 {
@@ -72,6 +73,7 @@ class DeepSeekProvider implements ProviderInterface, NamedToolSelectableInterfac
         private readonly string $apiKey,
         private readonly string $defaultModel = self::MODEL_DEEPSEEK_V4_FLASH,
         private readonly int $defaultMaxTokens = 4096,
+        private readonly ?Effort $defaultEffort = null,
     ) {
     }
 
@@ -228,7 +230,59 @@ class DeepSeekProvider implements ProviderInterface, NamedToolSelectableInterfac
             }
         }
 
+        // Reasoning effort. DeepSeek nests it, and thinking is on by default, so "none" has to
+        // disable it explicitly rather than simply omitting the field.
+        $effort = $this->effortFor($options);
+
+        if ($effort !== null) {
+            $payload['thinking'] = $this->thinkingFor($effort, (string) ($options['model'] ?? $this->defaultModel));
+        }
+
         return $payload;
+    }
+
+    /**
+     * The effort this request asks for: the per-call option, else the provider default.
+     *
+     * @param array<string, mixed> $options The caller's request options
+     *
+     * @throws UnknownEffortException When the level is not one core defines
+     */
+    private function effortFor(array $options): ?Effort
+    {
+        if (!isset($options['effort'])) {
+            return $this->defaultEffort;
+        }
+
+        $level = (string) $options['effort'];
+
+        return Effort::tryFrom($level) ?? throw new UnknownEffortException($level);
+    }
+
+    /**
+     * Build DeepSeek's nested thinking object.
+     *
+     * Its scale is low, high and max, with no medium. Pro currently treats low as high, so it is
+     * not offered there rather than being sent and quietly upgraded.
+     *
+     * @return array{type: string, reasoning_effort?: string}
+     */
+    private function thinkingFor(Effort $effort, string $model): array
+    {
+        if (!$effort->thinks()) {
+            return ['type' => 'disabled'];
+        }
+
+        $offered = str_contains($model, 'pro')
+            ? [Effort::High, Effort::Maximum]
+            : [Effort::Low, Effort::High, Effort::Maximum];
+
+        $narrowed = $effort->nearestOf($offered);
+
+        return [
+            'type' => 'enabled',
+            'reasoning_effort' => $narrowed === Effort::Maximum ? 'max' : $narrowed->value,
+        ];
     }
 
     /**
