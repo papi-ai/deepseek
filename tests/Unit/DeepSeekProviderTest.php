@@ -138,7 +138,10 @@ describe('DeepSeekProvider', function () {
 
             $this->provider->chat([Message::user('Hello')]);
 
-            expect($this->provider->lastPayload['model'])->toBe('deepseek-v4-flash');
+            // deepseek-v4-flash is a retired name that DeepSeek routes "temporarily"; the
+            // documented model is deepseek-flash, and a default must not rest on a redirect.
+            expect($this->provider->lastPayload['model'])->toBe('deepseek-flash');
+            expect(DeepSeekProvider::MODEL_DEEPSEEK_FLASH)->toBe('deepseek-flash');
         });
 
         it('overrides model and options from parameters', function () {
