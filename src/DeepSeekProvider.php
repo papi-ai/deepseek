@@ -58,19 +58,19 @@ class DeepSeekProvider implements ProviderInterface, NamedToolSelectableInterfac
      * The name DeepSeek documents for the current Flash generation (V4.1-Flash at the time of
      * writing). Unlike the versioned names, it follows the generation forward.
      */
-    public const MODEL_DEEPSEEK_FLASH = 'deepseek-flash';
+    public const MODEL_DEEPSEEK_FLASH = DeepSeekModel::Flash->value;
     /**
      * DeepSeek announced on 10 September 2026 that Pro requests would route to Flash from the 14th
      * until V4.1-Pro ships, then contradicted that on the pricing page. Treat as live but unstable.
      */
-    public const MODEL_DEEPSEEK_V4_PRO = 'deepseek-v4-pro';
+    public const MODEL_DEEPSEEK_V4_PRO = DeepSeekModel::V4Pro->value;
 
     /** @deprecated Retired 10 September 2026; routed to Flash "temporarily". Use MODEL_DEEPSEEK_FLASH. */
-    public const MODEL_DEEPSEEK_V4_FLASH = 'deepseek-v4-flash';
+    public const MODEL_DEEPSEEK_V4_FLASH = DeepSeekModel::V4Flash->value;
     /** @deprecated Discontinued 24 July 2026; requests fail. Use MODEL_DEEPSEEK_FLASH. */
-    public const MODEL_DEEPSEEK_CHAT = 'deepseek-chat';
+    public const MODEL_DEEPSEEK_CHAT = DeepSeekModel::Chat->value;
     /** @deprecated Discontinued 24 July 2026; requests fail. Use MODEL_DEEPSEEK_FLASH. */
-    public const MODEL_DEEPSEEK_REASONER = 'deepseek-reasoner';
+    public const MODEL_DEEPSEEK_REASONER = DeepSeekModel::Reasoner->value;
 
     /**
      * Create a new DeepSeek provider instance.
@@ -283,9 +283,11 @@ class DeepSeekProvider implements ProviderInterface, NamedToolSelectableInterfac
             return ['type' => 'disabled'];
         }
 
-        $offered = str_contains($model, 'pro')
-            ? [Effort::High, Effort::Maximum]
-            : [Effort::Low, Effort::High, Effort::Maximum];
+        // The model answers for itself when we know it; an unknown ID is read by name.
+        $offered = DeepSeekModel::tryFrom($model)?->effortLevels()
+            ?? (str_contains($model, 'pro')
+                ? [Effort::High, Effort::Maximum]
+                : [Effort::Low, Effort::High, Effort::Maximum]);
 
         $narrowed = $effort->nearestOf($offered);
 
