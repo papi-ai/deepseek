@@ -54,12 +54,22 @@ class DeepSeekProvider implements ProviderInterface, NamedToolSelectableInterfac
 {
     private const API_URL = 'https://api.deepseek.com/chat/completions';
 
-    public const MODEL_DEEPSEEK_V4_FLASH = 'deepseek-v4-flash';
+    /**
+     * The name DeepSeek documents for the current Flash generation (V4.1-Flash at the time of
+     * writing). Unlike the versioned names, it follows the generation forward.
+     */
+    public const MODEL_DEEPSEEK_FLASH = 'deepseek-flash';
+    /**
+     * DeepSeek announced on 10 September 2026 that Pro requests would route to Flash from the 14th
+     * until V4.1-Pro ships, then contradicted that on the pricing page. Treat as live but unstable.
+     */
     public const MODEL_DEEPSEEK_V4_PRO = 'deepseek-v4-pro';
 
-    /** @deprecated Discontinued 24 July 2026; requests fail. Use MODEL_DEEPSEEK_V4_FLASH. */
+    /** @deprecated Retired 10 September 2026; routed to Flash "temporarily". Use MODEL_DEEPSEEK_FLASH. */
+    public const MODEL_DEEPSEEK_V4_FLASH = 'deepseek-v4-flash';
+    /** @deprecated Discontinued 24 July 2026; requests fail. Use MODEL_DEEPSEEK_FLASH. */
     public const MODEL_DEEPSEEK_CHAT = 'deepseek-chat';
-    /** @deprecated Discontinued 24 July 2026; requests fail. Use MODEL_DEEPSEEK_V4_FLASH. */
+    /** @deprecated Discontinued 24 July 2026; requests fail. Use MODEL_DEEPSEEK_FLASH. */
     public const MODEL_DEEPSEEK_REASONER = 'deepseek-reasoner';
 
     /**
@@ -71,7 +81,7 @@ class DeepSeekProvider implements ProviderInterface, NamedToolSelectableInterfac
      */
     public function __construct(
         private readonly string $apiKey,
-        private readonly string $defaultModel = self::MODEL_DEEPSEEK_V4_FLASH,
+        private readonly string $defaultModel = self::MODEL_DEEPSEEK_FLASH,
         private readonly int $defaultMaxTokens = 4096,
         private readonly ?Effort $defaultEffort = null,
     ) {

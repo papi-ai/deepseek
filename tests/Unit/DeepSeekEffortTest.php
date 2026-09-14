@@ -86,7 +86,7 @@ describe('DeepSeekProvider reasoning effort', function () {
     });
 
     it('accepts a provider-level default the call can override', function () {
-        $provider = new TestableDeepSeekEffortProvider('k', 'deepseek-v4-flash', 4096, Effort::Maximum);
+        $provider = new TestableDeepSeekEffortProvider('k', DeepSeekProvider::MODEL_DEEPSEEK_FLASH, 4096, Effort::Maximum);
 
         $provider->chat([Message::user('hi')], []);
         expect($provider->lastPayload['thinking']['reasoning_effort'])->toBe('max');
