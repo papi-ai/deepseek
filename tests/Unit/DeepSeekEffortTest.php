@@ -13,6 +13,7 @@
 declare(strict_types=1);
 
 use PapiAI\Core\Effort;
+use PapiAI\Core\Exception\ProviderException;
 use PapiAI\Core\Message;
 use PapiAI\DeepSeek\DeepSeekProvider;
 
@@ -93,5 +94,20 @@ describe('DeepSeekProvider reasoning effort', function () {
 
         $provider->chat([Message::user('hi')], ['effort' => 'low']);
         expect($provider->lastPayload['thinking']['reasoning_effort'])->toBe('low');
+    });
+
+    describe('sampling parameters', function () {
+        it('refuses temperature while thinking, which the API ignores with a warning', function () {
+            expect(fn () => ($this->chat)(['effort' => 'high', 'temperature' => 0.3]))
+                ->toThrow(ProviderException::class, 'temperature');
+
+            expect($this->provider->lastPayload)->toBe([]);
+        });
+
+        it('forwards temperature when thinking is off', function () {
+            ($this->chat)(['effort' => 'none', 'temperature' => 0.3]);
+
+            expect($this->provider->lastPayload['temperature'])->toBe(0.3);
+        });
     });
 });
