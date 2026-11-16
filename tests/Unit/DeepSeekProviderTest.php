@@ -18,6 +18,7 @@ use PapiAI\Core\Exception\ProviderException;
 use PapiAI\Core\Exception\RateLimitException;
 use PapiAI\Core\Message;
 use PapiAI\Core\Response;
+use PapiAI\Core\StopReason;
 use PapiAI\Core\StreamChunk;
 use PapiAI\Core\ToolCall;
 use PapiAI\DeepSeek\DeepSeekProvider;
@@ -482,5 +483,21 @@ describe('DeepSeekProvider', function () {
 
             expect($this->provider->lastPayload['messages'][1])->not->toHaveKey('reasoning_content');
         });
+    });
+});
+
+describe('DeepSeekProvider stop reason', function () {
+    beforeEach(function () {
+        $this->provider = new TestableDeepSeekProvider('test-api-key');
+        $this->stoppedBecause = function (string $raw): StopReason {
+            $this->provider->fakeResponse = ['choices' => [['message' => ['role' => 'assistant', 'content' => 'x'], 'finish_reason' => $raw]], 'usage' => []];
+
+            return $this->provider->chat([Message::user('Hi')])->stoppedBecause;
+        };
+    });
+
+    it('says why the model stopped in core\'s vocabulary', function () {
+        expect(($this->stoppedBecause)('stop'))->toBe(StopReason::Stop);
+        expect(($this->stoppedBecause)('length'))->toBe(StopReason::MaxTokens);
     });
 });
