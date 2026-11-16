@@ -386,7 +386,7 @@ class DeepSeekProvider implements ProviderInterface, NamedToolSelectableInterfac
                     'type' => 'function',
                     'function' => [
                         'name' => $tc->name,
-                        'arguments' => json_encode($tc->arguments),
+                        'arguments' => $tc->argumentsAsJson(),
                     ],
                 ];
             }, $message->toolCalls);
