@@ -435,4 +435,52 @@ describe('DeepSeekProvider', function () {
                 ->toThrow(ProviderException::class);
         });
     });
+
+    // In thinking mode with tools, DeepSeek requires the reasoning_content of every prior turn to
+    // be sent back on the assistant message, or the model loses its own chain of thought.
+    describe('reasoning_content with tools', function () {
+        beforeEach(function () {
+            $this->provider->fakeResponse = [
+                'choices' => [[
+                    'message' => [
+                        'role' => 'assistant',
+                        'content' => null,
+                        'reasoning_content' => 'I should check the weather first.',
+                        'tool_calls' => [[
+                            'id' => 'call_1', 'type' => 'function',
+                            'function' => ['name' => 'get_weather', 'arguments' => '{"city":"Lisbon"}'],
+                        ]],
+                    ],
+                    'finish_reason' => 'tool_calls',
+                ]],
+                'usage' => ['prompt_tokens' => 1, 'completion_tokens' => 1],
+            ];
+            $this->tools = [['name' => 'get_weather', 'description' => 'Weather', 'parameters' => ['type' => 'object']]];
+        });
+
+        it('replays the reasoning on the assistant turn that made the calls', function () {
+            $first = $this->provider->chat([Message::user('Weather?')], ['tools' => $this->tools]);
+
+            $this->provider->chat([
+                Message::user('Weather?'),
+                Message::assistant('', $first->toolCalls),
+                Message::toolResult('call_1', '{"temp": 21}'),
+            ], ['tools' => $this->tools]);
+
+            $assistant = $this->provider->lastPayload['messages'][1];
+            expect($assistant['role'])->toBe('assistant');
+            expect($assistant['reasoning_content'])->toBe('I should check the weather first.');
+            expect($assistant['tool_calls'][0]['id'])->toBe('call_1');
+        });
+
+        it('sends no reasoning_content for a turn it never saw, rather than inventing one', function () {
+            $this->provider->chat([
+                Message::user('Weather?'),
+                Message::assistant('', [new ToolCall('call_x', 'get_weather', [])]),
+                Message::toolResult('call_x', 'sunny'),
+            ], ['tools' => $this->tools]);
+
+            expect($this->provider->lastPayload['messages'][1])->not->toHaveKey('reasoning_content');
+        });
+    });
 });

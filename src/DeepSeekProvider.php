@@ -79,6 +79,9 @@ class DeepSeekProvider implements ProviderInterface, NamedToolSelectableInterfac
      * @param string $defaultModel     Model to use when not specified in options
      * @param int    $defaultMaxTokens Maximum output tokens when not specified in options
      */
+    /** @var array<string, string> reasoning_content keyed by the tool call ids it produced, for replay */
+    private array $reasoning = [];
+
     public function __construct(
         private readonly string $apiKey,
         private readonly string $defaultModel = self::MODEL_DEEPSEEK_FLASH,
@@ -107,6 +110,8 @@ class DeepSeekProvider implements ProviderInterface, NamedToolSelectableInterfac
     {
         $payload = $this->buildPayload($messages, $options);
         $response = $this->request($payload);
+
+        $this->rememberReasoning($response['choices'][0]['message'] ?? []);
 
         return Response::fromOpenAI($response, $messages);
     }
@@ -202,6 +207,7 @@ class DeepSeekProvider implements ProviderInterface, NamedToolSelectableInterfac
         }
 
         if (isset($options['temperature'])) {
+            $this->assertSamplingAllowed($options);
             $payload['temperature'] = $options['temperature'];
         }
 
@@ -298,6 +304,61 @@ class DeepSeekProvider implements ProviderInterface, NamedToolSelectableInterfac
     }
 
     /**
+     * Refuse temperature while thinking, which DeepSeek ignores with a deprecation warning.
+     *
+     * @throws ProviderException When thinking is on and a sampling parameter was given
+     */
+    private function assertSamplingAllowed(array $options): void
+    {
+        $effort = $this->effortFor($options);
+
+        if ($effort === null || !$effort->thinks()) {
+            return;
+        }
+
+        throw new ProviderException(
+            'DeepSeek ignores "temperature" in thinking mode. Remove it, or ask for effort "none".',
+            $this->getName(),
+        );
+    }
+
+    /**
+     * Keep the reasoning behind a turn's tool calls so the next request can send it back.
+     *
+     * @param array<string, mixed> $message The assistant message DeepSeek returned
+     */
+    private function rememberReasoning(array $message): void
+    {
+        $reasoning = $message['reasoning_content'] ?? null;
+
+        if (!is_string($reasoning) || $reasoning === '') {
+            return;
+        }
+
+        foreach ($message['tool_calls'] ?? [] as $call) {
+            if (isset($call['id'])) {
+                $this->reasoning[(string) $call['id']] = $reasoning;
+            }
+        }
+    }
+
+    /**
+     * The reasoning that produced these tool calls, if this instance saw it.
+     *
+     * @param ToolCall[] $toolCalls
+     */
+    private function reasoningBehind(array $toolCalls): ?string
+    {
+        foreach ($toolCalls as $toolCall) {
+            if (isset($this->reasoning[$toolCall->id])) {
+                return $this->reasoning[$toolCall->id];
+            }
+        }
+
+        return null;
+    }
+
+    /**
      * Convert a Message to OpenAI-compatible API format.
      */
     private function convertMessage(Message $message): array
@@ -312,6 +373,13 @@ class DeepSeekProvider implements ProviderInterface, NamedToolSelectableInterfac
             $apiMessage['tool_call_id'] = $message->toolCallId;
         } elseif ($message->hasToolCalls()) {
             $apiMessage['content'] = $message->getText() ?: null;
+
+            $reasoning = $this->reasoningBehind($message->toolCalls);
+
+            if ($reasoning !== null) {
+                $apiMessage['reasoning_content'] = $reasoning;
+            }
+
             $apiMessage['tool_calls'] = array_map(function (ToolCall $tc) {
                 return [
                     'id' => $tc->id,
