@@ -42,7 +42,7 @@ DeepSeekProvider::MODEL_DEEPSEEK_V4_PRO  // 'deepseek-v4-pro'
 ## Features
 
 - Tool/function calling
-- Structured output (JSON mode)
+- Structured output: JSON mode is switched on, and the agent states the schema in the prompt, since DeepSeek takes none
 - Streaming support
 
 ## Creating It by Name

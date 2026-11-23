@@ -167,11 +167,11 @@ class DeepSeekProvider implements ProviderInterface, NamedToolSelectableInterfac
     /**
      * Whether this provider supports structured JSON output.
      *
-     * @return bool Always true; DeepSeek supports JSON schema response format
+     * @return bool Always false; DeepSeek guarantees valid JSON but cannot be given a schema
      */
     public function supportsStructuredOutput(): bool
     {
-        return true;
+        return false;
     }
 
     /**
@@ -215,15 +215,9 @@ class DeepSeekProvider implements ProviderInterface, NamedToolSelectableInterfac
             $payload['stop'] = $options['stopSequences'];
         }
 
-        // Handle structured output / JSON mode
+        // DeepSeek has a JSON mode but takes no schema; the agent states the schema in the prompt.
         if (isset($options['outputSchema'])) {
-            $payload['response_format'] = [
-                'type' => 'json_schema',
-                'json_schema' => [
-                    'name' => 'response',
-                    'schema' => $options['outputSchema'],
-                ],
-            ];
+            $payload['response_format'] = ['type' => 'json_object'];
         }
 
         // Handle tools
