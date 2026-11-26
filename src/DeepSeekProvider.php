@@ -25,6 +25,7 @@ use PapiAI\Core\Exception\UnknownEffortException;
 use PapiAI\Core\Message;
 use PapiAI\Core\Response;
 use PapiAI\Core\Role;
+use PapiAI\Core\Schema\WireSchema;
 use PapiAI\Core\StreamChunk;
 use PapiAI\Core\ToolCall;
 use PapiAI\Core\ToolChoice;
@@ -438,7 +439,7 @@ class DeepSeekProvider implements ProviderInterface, NamedToolSelectableInterfac
                     'function' => [
                         'name' => $tool['name'],
                         'description' => $tool['description'],
-                        'parameters' => $tool['input_schema'] ?? $tool['parameters'] ?? ['type' => 'object', 'properties' => []],
+                        'parameters' => (new WireSchema($tool['input_schema'] ?? $tool['parameters'] ?? ['type' => 'object']))->toArray(),
                     ],
                 ];
             }
