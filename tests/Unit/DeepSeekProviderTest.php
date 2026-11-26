@@ -78,8 +78,8 @@ describe('DeepSeekProvider', function () {
             expect($this->provider->supportsVision())->toBeFalse();
         });
 
-        it('supports structured output', function () {
-            expect($this->provider->supportsStructuredOutput())->toBeTrue();
+        it('leaves the schema to be stated in the prompt, having only a JSON mode', function () {
+            expect($this->provider->supportsStructuredOutput())->toBeFalse();
         });
     });
 
@@ -344,7 +344,7 @@ describe('DeepSeekProvider', function () {
             expect($content[1]['image_url']['url'])->toBe('data:image/png;base64,base64data');
         });
 
-        it('includes output schema as response_format', function () {
+        it('switches JSON mode on when a schema is asked for', function () {
             $this->provider->fakeResponse = [
                 'choices' => [
                     [
@@ -359,13 +359,7 @@ describe('DeepSeekProvider', function () {
             $schema = ['type' => 'object', 'properties' => ['name' => ['type' => 'string']]];
             $this->provider->chat([Message::user('Hello')], ['outputSchema' => $schema]);
 
-            expect($this->provider->lastPayload['response_format'])->toBe([
-                'type' => 'json_schema',
-                'json_schema' => [
-                    'name' => 'response',
-                    'schema' => $schema,
-                ],
-            ]);
+            expect($this->provider->lastPayload['response_format'])->toBe(['type' => 'json_object']);
         });
     });
 
